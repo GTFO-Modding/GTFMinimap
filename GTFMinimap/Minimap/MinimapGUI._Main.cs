@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using GTFMinimap.Minimap.Utils;
 using GTFO.API;
 using Il2CppInterop.Runtime.Attributes;
 using Player;
@@ -59,16 +60,6 @@ internal sealed partial class MinimapGUI : MonoBehaviour
             return;
 
         Update_CameraTransform(localPlayer);
-
-
-
-        if (Input.GetKeyDown(KeyCode.T))
-        {
-            if (_RenderTexture != null)
-            {
-                RenderCameraToFile();
-            }
-        }
     }
 
     void FixedUpdate()

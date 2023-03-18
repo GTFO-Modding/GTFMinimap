@@ -55,7 +55,7 @@ internal sealed partial class MinimapGUI : MonoBehaviour
         _NavMesh.vertices = vertices;
         _NavMesh.triangles = triangles;
 
-        MeshUtil.RemoveInaccessibleMesh(_NavMesh);
+        MeshUtil.RemoveInvalidNavMeshTriangles(_NavMesh);
 
         //Apply Mesh
         filter.mesh = _NavMesh;

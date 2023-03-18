@@ -13,12 +13,13 @@ namespace GTFMinimap.Minimap;
 
 internal sealed partial class MinimapGUI : MonoBehaviour
 {
-    private const float CAM_DEFAULT_CEILING = 25.0f;
+    private const float CAM_DEFAULT_HEIGHT = 15.0f;
     private const float CAM_MAX_DISTANCE = 50.0f;
     private const float CAM_FOV = 110.0f;
 
     private Camera _Cam;
     private RenderTexture _RenderTexture;
+    private float _CamHeight = CAM_DEFAULT_HEIGHT;
 
     [HideFromIl2Cpp]
     void Start_AddCamera()
@@ -45,7 +46,7 @@ internal sealed partial class MinimapGUI : MonoBehaviour
         _Cam.useOcclusionCulling = false;
         _Cam.renderingPath = RenderingPath.Forward;
         _Cam.clearFlags = CameraClearFlags.SolidColor;
-        _Cam.backgroundColor = Color.blue.RGBMultiplied(0.15f);
+        _Cam.backgroundColor = Color.red.RGBMultiplied(0.65f);
         _Cam.targetTexture = _RenderTexture;
     }
 
@@ -57,16 +58,13 @@ internal sealed partial class MinimapGUI : MonoBehaviour
         var pos = localPlayer.Position;
         Materials.UpdatePlayerPosition(pos);
 
-        var ceilingHeight = CAM_DEFAULT_CEILING;
-        /*
-        var hasCeiling = Physics.Raycast(pos, Vector3.up, out RaycastHit hitInfo, 20.0f, LayerManager.MASK_WORLD);
+        var hasCeiling = Physics.Raycast(localPlayer.EyePosition, Vector3.up, out RaycastHit hitInfo, CAM_DEFAULT_HEIGHT, LayerManager.MASK_WORLD);
         if (hasCeiling)
         {
-            ceilingHeight = hitInfo.distance;
+            _CamHeight = hitInfo.distance;
         }
-        */
 
-        pos += Vector3.up * ceilingHeight;
+        pos += Vector3.up * _CamHeight;
 
         camTransform.position = pos;
         camTransform.rotation = Quaternion.LookRotation(Vector3.down, localPlayer.transform.forward);

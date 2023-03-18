@@ -12,6 +12,85 @@ using UnityEngine.AI;
 namespace GTFMinimap.Minimap.Utils;
 internal static class MeshUtil
 {
+    public static void RemoveInvalidNavMeshTriangles(Mesh baseMesh)
+    {
+        var vertices = (Vector3[])baseMesh.vertices;
+        var triangles = (int[])baseMesh.triangles;
+        var trianglesCount = triangles.Length / 3;
+
+        var newTriangles = new List<int>();
+
+        for (int i = 0; i<trianglesCount; i++)
+        {
+            var p0 = triangles[i * 3];
+            var p1 = triangles[(i * 3) + 1];
+            var p2 = triangles[(i * 3) + 2];
+
+            CalcTriangleProps(vertices[p0], vertices[p1], vertices[p2],
+                out var center,
+                out var heightDifference);
+            var dimension = Dimension.GetDimensionFromPos(center);
+            if (dimension == null)
+            {
+                continue;
+            }
+
+            var tolerance = Mathf.Max(1.5f, heightDifference * 1.5f);
+            if (!IsPositionValid(dimension.DimensionIndex, center, tolerance))
+            {
+                continue;
+            }
+
+            newTriangles.Add(p0);
+            newTriangles.Add(p1);
+            newTriangles.Add(p2);
+        }
+
+        baseMesh.triangles = newTriangles.ToArray();
+        baseMesh.RecalculateNormals();
+        newTriangles.Clear();
+    }
+
+    private static bool IsPositionValid(eDimensionIndex dimensionIndex, Vector3 position, float voxelSearchTolerance)
+    {
+        if (!AIG_GeomorphNodeVolume.TryGetGeomorphVolume(0, dimensionIndex, position, out var gnv))
+        {
+            //DisplayMarker("GNV Missing!", position);
+            return false;
+        }
+
+        if (!gnv.m_voxelNodeVolume.TryGetPillar(position, out var vnp))
+        {
+            //DisplayMarker("Pillar Missing!", position);
+            return false;
+        }
+
+        var height = position.y;
+        if (!vnp.TryGetVoxelNode(height - voxelSearchTolerance, height + voxelSearchTolerance, out var iNode))
+        {
+            //DisplayMarker("iNode Missing!", position);
+            return false;
+        }
+
+        if (!AIG_NodeCluster.TryGetNodeCluster(iNode.ClusterID, out var nodeCluster))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static void CalcTriangleProps(Vector3 p1, Vector3 p2, Vector3 p3, out Vector3 center, out float heightDifference)
+    {
+        center = (p1 + p2 + p3) * 0.333333f;
+
+        var lowest = Mathf.Min(p1.y, p2.y, p3.y);
+        var highest = Mathf.Max(p1.y, p2.y, p3.y);
+
+        heightDifference = highest - lowest;
+    }
+
+    /*
     public static void RemoveInaccessibleMesh(Mesh baseMesh)
     {
         Stopwatch w = new();
@@ -70,62 +149,9 @@ internal static class MeshUtil
         Logger.Info($"Invalid Vertices Count: {count}/{total} ({count / (float)total})");
         RemoveInvalidTriangles(baseMesh, isVerticesInvalid);
     }
+    */
 
-    private static void RemoveInvalidTriangles(Mesh baseMesh, bool[] isInvalidVertices)
-    {
-        var triangles = (int[])baseMesh.triangles;
-        var trianglesCount = triangles.Length / 3;
-
-        var newTriangles = new List<int>();
-
-        for (int i = 0; i<trianglesCount; i++)
-        {
-            var p0 = triangles[i * 3];
-            var p1 = triangles[(i * 3) + 1];
-            var p2 = triangles[(i * 3) + 2];
-
-            if (isInvalidVertices[p0] || isInvalidVertices[p1] || isInvalidVertices[p2])
-            {
-                continue;
-            }
-
-            newTriangles.Add(p0);
-            newTriangles.Add(p1);
-            newTriangles.Add(p2);
-        }
-
-        baseMesh.triangles = newTriangles.ToArray();
-        baseMesh.RecalculateNormals();
-        newTriangles.Clear();
-    }
-
-    private static bool IsPositionValid(eDimensionIndex dimensionIndex, Vector3 position)
-    {
-        if (!AIG_GeomorphNodeVolume.TryGetGeomorphVolume(0, dimensionIndex, position, out var gnv))
-        {
-            DisplayMarker("GNV Missing!", position);
-            return false;
-        }
-
-        if (!gnv.m_voxelNodeVolume.TryGetPillar(position, out var vnp))
-        {
-            DisplayMarker("Pillar Missing!", position);
-            return false;
-        }
-
-        if (!vnp.TryGetVoxelNode(position.y, out var iNode))
-        {
-            DisplayMarker("iNode Missing!", position);
-            return false;
-        }
-
-        if (!AIG_NodeCluster.TryGetNodeCluster(iNode.ClusterID, out var nodeCluster))
-        {
-            return false;
-        }
-
-        return true;
-    }
+    
 
     private static void DisplayMarker(string name, Vector3 position)
     {
@@ -135,6 +161,7 @@ internal static class MeshUtil
     }
 
     //TODO: Split-up Meshes by Conntivitiy
+    /*
     public static void SplitMeshByConnectivity(Mesh baseMesh, out Mesh[] subMeshes)
     {
         var tempSubMeshes = new List<Mesh>();
@@ -204,4 +231,5 @@ internal static class MeshUtil
             return false;
         }
     }
+    */
 }
