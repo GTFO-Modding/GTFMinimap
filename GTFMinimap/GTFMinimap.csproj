@@ -27,4 +27,12 @@
 		<Obfuscate>True</Obfuscate>
 		<DefineConstants>RELEASE</DefineConstants>
 	</PropertyGroup>
+
+	<Target Name="CustomAfterBuild" AfterTargets="Build">
+		<Message Text="Copying Output to Plugins Folder..." Importance="High"/>
+		<Copy SourceFiles="$(OutputPath)\$(AssemblyName).dll"
+			  DestinationFolder="$(PluginsFolder)"/>
+		<Message Text="Copying Output to Plugins Folder Done!!!" Importance="High"/>
+	</Target>
+
 </Project>

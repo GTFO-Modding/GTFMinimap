@@ -17,49 +17,13 @@ using UnityEngine.Rendering;
 namespace GTFMinimap.Minimap;
 internal sealed partial class MinimapGUI : MonoBehaviour
 {
-    private int _Layer_MinimapItems;
-    private int _Mask_MinimapItems;
-
     private bool _IsVisible = false;
-    
-
-    void Start()
-    {
-        _Layer_MinimapItems = LayerMask.NameToLayer("InvisibleWall");
-        _Mask_MinimapItems = LayerMask.GetMask("InvisibleWall");
-
-        Start_AddCamera();
-
-        LevelAPI.OnBuildDone += OnBuildDone;
-        LevelAPI.OnLevelCleanup += OnLevelCleanup;
-    }
-
-
-    [HideFromIl2Cpp]
-    private void OnBuildDone()
-    {
-        var trigs = NavMesh.CalculateTriangulation();
-        Logger.Info($"Trig Info: vert count:{trigs.vertices.Length}, indics count: {trigs.indices.Length}");
-
-        File.WriteAllLines(Path.Combine(Paths.PluginPath, "areaDump.txt"), trigs.areas.Select(x=>x.ToString()));
-
-        ClearMesh();
-        CreateNavMesh();
-    }
-
-    [HideFromIl2Cpp]
-    private void OnLevelCleanup()
-    {
-        ClearMesh();
-    }
 
     void Update()
     {
         var localPlayer = PlayerManager.GetLocalPlayerAgent();
         if (localPlayer == null)
             return;
-
-        Update_CameraTransform(localPlayer);
     }
 
     void FixedUpdate()
@@ -78,12 +42,11 @@ internal sealed partial class MinimapGUI : MonoBehaviour
         if (!_IsVisible)
             return;
 
-        if (_RenderTexture == null)
+        if (MinimapCam.RenderTexture == null)
             return;
 
         GUI.Box(new Rect(100.0f, 100.0f, 250.0f, 250.0f), GUIContent.none);
-        GUI.DrawTexture(new Rect(100.0f, 100.0f, 250.0f, 250.0f), _RenderTexture, ScaleMode.ScaleAndCrop);
+        GUI.DrawTexture(new Rect(100.0f, 100.0f, 250.0f, 250.0f), MinimapCam.RenderTexture, ScaleMode.ScaleAndCrop);
         GUI.Box(new Rect(225.0f, 225.0f, 2.0f, 2.0f), GUIContent.none);
-        
     }
 }
